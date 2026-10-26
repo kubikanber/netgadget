@@ -80,3 +80,7 @@ Her uygulama yerel kontrollerle puanlanır (internete hiçbir şey gönderilmez)
 - Tarayıcıların "güvenli DNS" (DoH) özelliği açıksa bazı uç noktalar alan adı yerine IP veya ters DNS adıyla görünür.
 - Etkinliği biten UDP uçları ve kapanan TCP bağlantıları 30 sn daha listede kalır.
 - Yerel (loopback) trafik listelenmez.
+
+## Lisans
+
+[MIT](LICENSE) © 2026 kubikanber
