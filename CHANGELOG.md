@@ -6,6 +6,12 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) önerisine, s
 
 ## [Yayımlanmadı]
 
+### Eklenenler
+
+- İngilizce katkı rehberi: `CONTRIBUTING.md` İngilizce, Türkçesi `CONTRIBUTING.tr.md` oldu
+- Katkı rehberine "Belge çevirileri" bölümü (adlandırma, dil seçici satırı, ekran görüntüsü klasörleri) ve
+  arayüz metinleri / anahtar adlandırma kuralları eklendi
+
 ## [1.1.0] - 2026-10-26
 
 Çoklu dil desteği.

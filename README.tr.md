@@ -210,7 +210,7 @@ flowchart LR
 - **İnceleme:** dijital imza `Get-AuthenticodeSignature` ile, süreç bilgileri WMI ile arka planda okunur ve önbelleğe alınır.
 - **Arayüz:** WPF; C# kodu çalışma anında `Add-Type` ile derlenir, ayrı bir derleme adımı yoktur.
 - **Diller:** tüm metinler `lang\<dil>.json` dosyalarındadır (`"menu.sort": "Sıralama"` gibi). Bir dilde eksik
-  olan metin İngilizceden gelir. Yeni dil eklemek için [CONTRIBUTING.md](CONTRIBUTING.md#yeni-dil-ekleme).
+  olan metin İngilizceden gelir. Yeni dil eklemek için [CONTRIBUTING.tr.md](CONTRIBUTING.tr.md#yeni-dil-ekleme).
 
 ## Sorun giderme
 
@@ -297,7 +297,8 @@ Hepsi isteğe bağlı olacak ve açıkça onayınızla çalışacak.
 
 Öneri ve hata bildirimleri için [Issues](https://github.com/kubikanber/netgadget/issues) sayfasını kullanabilirsiniz.
 Güvenlik açıklarını lütfen [SECURITY.md](SECURITY.md) dosyasındaki gizli bildirim yoluyla iletin.
-Katkı yapmak isterseniz [CONTRIBUTING.md](CONTRIBUTING.md); sürümlerdeki değişiklikler için [CHANGELOG.md](CHANGELOG.md).
+Kod ya da çeviriyle katkı yapmak isterseniz [CONTRIBUTING.tr.md](CONTRIBUTING.tr.md); sürümlerdeki değişiklikler
+için [CHANGELOG.md](CHANGELOG.md).
 
 ## Sınırlamalar
 
@@ -317,7 +318,8 @@ Katkı yapmak isterseniz [CONTRIBUTING.md](CONTRIBUTING.md); sürümlerdeki değ
 | `lang/` | Arayüz dilleri (`en.json`, `tr.json`) |
 | `tools/Test-Translations.ps1` | Dil dosyalarında eksik / fazla anahtar denetimi |
 | `docs/images/` | README ekran görüntüleri (`en/`, `tr/`) |
-| `CHANGELOG.md` · `CONTRIBUTING.md` · `SECURITY.md` | Değişiklik günlüğü, katkı rehberi, güvenlik politikası |
+| `CONTRIBUTING.md` · `CONTRIBUTING.tr.md` | Katkı rehberi (İngilizce · Türkçe) |
+| `CHANGELOG.md` · `SECURITY.md` | Değişiklik günlüğü, güvenlik politikası |
 
 ## Lisans
 

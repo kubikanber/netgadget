@@ -212,7 +212,7 @@ flowchart LR
   background and cached.
 - **Interface:** WPF; the C# code is compiled at runtime with `Add-Type`, there is no separate build step.
 - **Languages:** all texts live in `lang\<language>.json` files (like `"menu.sort": "Sort by"`). Any text missing in a
-  language falls back to English. See [CONTRIBUTING.md](CONTRIBUTING.md#yeni-dil-ekleme) to add a language.
+  language falls back to English. See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-language) to add a language.
 
 ## Troubleshooting
 
@@ -300,8 +300,8 @@ All optional and only with your explicit consent.
 
 Use [Issues](https://github.com/kubikanber/netgadget/issues) for suggestions and bug reports.
 Please report security vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
-Contributing: [CONTRIBUTING.md](CONTRIBUTING.md); release history: [CHANGELOG.md](CHANGELOG.md)
-(these documents are currently in Turkish).
+Want to contribute code or a translation? See [CONTRIBUTING.md](CONTRIBUTING.md).
+Release history: [CHANGELOG.md](CHANGELOG.md) (SECURITY.md and CHANGELOG.md are currently in Turkish).
 
 ## Limitations
 
@@ -321,7 +321,8 @@ Contributing: [CONTRIBUTING.md](CONTRIBUTING.md); release history: [CHANGELOG.md
 | `lang/` | Interface languages (`en.json`, `tr.json`) |
 | `tools/Test-Translations.ps1` | Checks language files for missing / unused keys |
 | `docs/images/` | README screenshots (`en/`, `tr/`) |
-| `CHANGELOG.md` · `CONTRIBUTING.md` · `SECURITY.md` | Release history, contributing guide, security policy |
+| `CONTRIBUTING.md` · `CONTRIBUTING.tr.md` | Contributing guide (English · Turkish) |
+| `CHANGELOG.md` · `SECURITY.md` | Release history, security policy |
 
 ## License
 
