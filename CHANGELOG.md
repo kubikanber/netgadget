@@ -6,6 +6,10 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) önerisine, s
 
 ## [Yayımlanmadı]
 
+## [1.1.0] - 2026-10-26
+
+Çoklu dil desteği.
+
 ### Eklenenler
 
 - **Çoklu dil desteği:** İngilizce ve Türkçe arayüz. Metinler `lang\*.json` dosyalarında; dil Windows'un
@@ -45,5 +49,6 @@ Biçim [Keep a Changelog](https://keepachangelog.com/tr-TR/1.1.0/) önerisine, s
 - Sıralama: anlık hız, oturum toplamı, bağlantı sayısı, ad, şüphe puanı
 - Kenarlıksız, yarı saydam, sürüklenebilir pencere; tepsi simgesi ve menü; ayarların hatırlanması
 
-[Yayımlanmadı]: https://github.com/kubikanber/netgadget/compare/v1.0.0...HEAD
+[Yayımlanmadı]: https://github.com/kubikanber/netgadget/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/kubikanber/netgadget/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/kubikanber/netgadget/releases/tag/v1.0.0
