@@ -283,6 +283,8 @@ Hepsi isteğe bağlı olacak ve açıkça onayınızla çalışacak.
 - [ ] **Rapor dışa aktarma:** HTML / CSV
 
 Öneri ve hata bildirimleri için [Issues](https://github.com/kubikanber/netgadget/issues) sayfasını kullanabilirsiniz.
+Güvenlik açıklarını lütfen [SECURITY.md](SECURITY.md) dosyasındaki gizli bildirim yoluyla iletin.
+Katkı yapmak isterseniz [CONTRIBUTING.md](CONTRIBUTING.md); sürümlerdeki değişiklikler için [CHANGELOG.md](CHANGELOG.md).
 
 ## Sınırlamalar
 
@@ -300,6 +302,7 @@ Hepsi isteğe bağlı olacak ve açıkça onayınızla çalışacak.
 | `NetSampler.cs` | ETW, bağlantı tabloları, alan adları, uygulama gruplama |
 | `Inspector.cs` | İmza, süreç bilgisi, şüphe puanı, "ilk kez görüldü", güvenilir listesi |
 | `docs/images/` | README ekran görüntüleri |
+| `CHANGELOG.md` · `CONTRIBUTING.md` · `SECURITY.md` | Değişiklik günlüğü, katkı rehberi, güvenlik politikası |
 
 ## Lisans
 

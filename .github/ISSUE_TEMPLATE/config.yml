@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Güvenlik açığı bildir
+    url: https://github.com/kubikanber/netgadget/security/advisories/new
+    about: Güvenlik açıklarını herkese açık issue yerine buradan gizlice bildirin.
+  - name: 📖 Kullanım ve sorun giderme
+    url: https://github.com/kubikanber/netgadget#sorun-giderme
+    about: Sık karşılaşılan durumlar ve çözümleri README'de.

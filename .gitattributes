@@ -1,0 +1,14 @@
+# Metin dosyaları depoda LF olarak saklanır.
+* text=auto
+
+# Windows'ta çalışan dosyalar her ortamda CRLF ile çıkarılır
+# (GitHub'ın otomatik kaynak kodu arşivleri dahil).
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.cs  text eol=crlf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary

@@ -1,0 +1,86 @@
+name: 🐞 Hata bildirimi
+description: Gadget beklendiği gibi çalışmıyor, hata veriyor ya da yanlış bilgi gösteriyor.
+title: "[Hata] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bildiriminiz için teşekkürler! Güvenlik açığı bildiriyorsanız lütfen burayı **kullanmayın**;
+        [SECURITY.md](https://github.com/kubikanber/netgadget/blob/main/SECURITY.md) dosyasındaki gizli bildirim yolunu izleyin.
+
+  - type: input
+    id: surum
+    attributes:
+      label: NetGadget sürümü
+      description: Releases sayfasındaki sürüm ya da git commit kimliği.
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows sürümü
+      options:
+        - Windows 11
+        - Windows 10
+        - Diğer
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mod
+    attributes:
+      label: Çalışma modu (gadget'ın sağ üst köşesinde yazar)
+      options:
+        - canlı · TCP + UDP
+        - canlı · yalnızca TCP
+        - sınırlı mod
+        - Gadget açılmıyor
+    validations:
+      required: true
+
+  - type: textarea
+    id: aciklama
+    attributes:
+      label: Ne oldu?
+      description: Sorunu kısaca anlatın.
+    validations:
+      required: true
+
+  - type: textarea
+    id: adimlar
+    attributes:
+      label: Nasıl tekrarlanır?
+      placeholder: |
+        1. Baslat.cmd ile açtım ve yönetici iznini onayladım
+        2. Microsoft Edge satırına tıkladım
+        3. ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: beklenen
+    attributes:
+      label: Ne olmasını bekliyordunuz?
+    validations:
+      required: false
+
+  - type: textarea
+    id: hata
+    attributes:
+      label: Hata mesajı ve ekran görüntüsü
+      description: |
+        Alt satırda "Hata: …" ya da "UDP izlenemiyor (…)" gibi bir yazı varsa olduğu gibi kopyalayın.
+        Ekran görüntüsünü bu alana sürükleyip bırakabilirsiniz.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: gizlilik
+    attributes:
+      label: Gizlilik
+      options:
+        - label: Ekran görüntüsünde ve metinde paylaşmak istemediğim IP adresleri, kullanıcı adları ve dosya yollarını gizledim.
+          required: true

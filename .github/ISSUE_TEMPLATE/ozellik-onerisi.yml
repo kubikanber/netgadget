@@ -1,0 +1,47 @@
+name: 💡 Özellik önerisi
+description: Yeni bir özellik ya da mevcut bir özelliğin iyileştirilmesini önerin.
+title: "[Öneri] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Önerinizden önce README'deki [Yol haritası](https://github.com/kubikanber/netgadget#yol-haritası)
+        bölümüne göz atın; belki zaten planlanmıştır.
+
+  - type: textarea
+    id: ihtiyac
+    attributes:
+      label: Hangi ihtiyaç ya da sorun?
+      description: Bu özellik neyi çözecek? Örneğin "hangi uygulamanın gece veri gönderdiğini görmek istiyorum".
+    validations:
+      required: true
+
+  - type: textarea
+    id: oneri
+    attributes:
+      label: Önerdiğiniz çözüm
+      description: Nasıl görünmesini ya da çalışmasını isterdiniz?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: alan
+    attributes:
+      label: Hangi alanla ilgili?
+      options:
+        - Trafik ölçümü
+        - Ayrıntı paneli / arayüz
+        - Şüpheli bağlantı incelemesi
+        - Ayarlar / menü
+        - Belgeler
+        - Diğer
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatif
+    attributes:
+      label: Düşündüğünüz alternatifler
+    validations:
+      required: false
