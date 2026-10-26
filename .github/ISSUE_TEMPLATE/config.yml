@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/kubikanber/netgadget/security/advisories/new
     about: Güvenlik açıklarını herkese açık issue yerine buradan gizlice bildirin.
   - name: 📖 Kullanım ve sorun giderme
-    url: https://github.com/kubikanber/netgadget#sorun-giderme
+    url: https://github.com/kubikanber/netgadget/blob/main/README.tr.md#sorun-giderme
     about: Sık karşılaşılan durumlar ve çözümleri README'de.

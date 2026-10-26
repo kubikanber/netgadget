@@ -1,224 +1,233 @@
 <div align="center">
 
-# 🌐 Ağ Etkinliği — NetGadget
+# 🌐 NetGadget — Network Activity
 
-**Bilgisayarınızda internete kimin, nereye, ne kadar veri gönderdiğini canlı gösteren Windows masaüstü gadget'ı.**
+**A Windows desktop gadget that shows live which apps on your computer send data to the internet, where, and how much.**
 
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6?logo=windows&logoColor=white)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1-5391FE?logo=powershell&logoColor=white)
-![Kurulum](https://img.shields.io/badge/kurulum-gerekmez-2ea44f)
-![Lisans](https://img.shields.io/badge/lisans-MIT-blue)
+![Install](https://img.shields.io/badge/install-not%20required-2ea44f)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-<img src="docs/images/genel-bakis.png" width="420" alt="NetGadget genel görünüm: toplam hız, son 60 saniyenin grafiği ve uygulama listesi">
+**English** · [Türkçe](README.tr.md)
+
+<img src="docs/images/en/overview.png" width="420" alt="NetGadget overview: total speed, last 60 seconds graph and the app list">
 
 </div>
 
 ---
 
-## Neden?
+## Why?
 
-Windows'un Görev Yöneticisi toplam ağ kullanımını gösterir, Kaynak İzleyicisi ise ayrıntılı ama hantaldır.
-NetGadget masaüstünüzün köşesinde küçük bir pencere olarak durur ve her saniye şunları cevaplar:
+Task Manager shows your total network usage; Resource Monitor has the details but is clunky.
+NetGadget sits in a corner of your desktop as a small window and answers every second:
 
-- **Hangi uygulamalar** şu an internete bağlı ve ne kadar veri indiriyor / yüklüyor?
-- **Nereye** bağlanıyorlar? (alan adı, IP, port, protokol)
-- Bu bağlantılardan **şüphelenmem gereken** var mı?
+- **Which apps** are connected to the internet right now, and how much are they downloading / uploading?
+- **Where** are they connecting? (domain name, IP, port, protocol)
+- Is there anything I **should be suspicious of**?
 
-Kurulum gerektirmez: Windows'ta zaten bulunan PowerShell 5.1 ve .NET Framework ile çalışır, hiçbir veri
-bilgisayarınızın dışına gönderilmez.
+Nothing to install: it runs on the PowerShell 5.1 and .NET Framework that already ship with Windows, and no data
+ever leaves your computer.
 
-## Özellikler
+## Features
 
 | | |
 |---|---|
-| 📊 **Canlı trafik** | Toplam ↓/↑ hız, son 60 saniyenin grafiği, uygulama başına anlık hız ve oturum toplamı |
-| 🔌 **Tüm bağlantılar** | TCP **ve** UDP (QUIC/HTTP3, DNS, oyunlar, görüntülü aramalar), IPv4 **ve** IPv6 |
-| 🔎 **Ayrıntı paneli** | Uygulamaya tıklayın: bağlandığı her uç nokta için alan adı, protokol, hizmet (HTTPS, QUIC, DNS…), hız ve toplam |
-| 🏷️ **Alan adları** | DNS sorgularından gerçek zamanlı öğrenilir; bilinmeyen internet IP'leri için yalnızca DNS ile ters sorgu |
-| 🏠 **Yerel ağ gruplaması** | mDNS, SSDP, LLMNR, NetBIOS gibi yerel ağ duyuruları tek satırda toplanır |
-| 🛡️ **Şüpheli bağlantı incelemesi** | Dijital imza, çalıştığı klasör, sahte sistem dosyası adları, komut satırı, başlatan süreç, DNS'siz IP, şüpheli portlar, gelen bağlantılar → **şüphe puanı** |
-| 🆕 **İlk kez görüldü** | Normal trafiğinizi öğrenir; daha önce hiç görülmemiş uygulama ve adresleri işaretler |
-| ✅ **Güvenilir listesi** | Bildiğiniz uygulama ve adresleri işaretleyip uyarılardan çıkarın |
-| ⚙️ **Gadget gibi** | Kenarlıksız, yarı saydam, sürüklenebilir; her zaman üstte, tepsi simgesi, konum ve ayarlar hatırlanır |
+| 📊 **Live traffic** | Total ↓/↑ speed, a graph of the last 60 seconds, per-app current speed and session total |
+| 🔌 **All connections** | TCP **and** UDP (QUIC/HTTP3, DNS, games, video calls), IPv4 **and** IPv6 |
+| 🔎 **Details panel** | Click an app: domain, protocol, service (HTTPS, QUIC, DNS…), speed and total for every endpoint |
+| 🏷️ **Domain names** | Learned in real time from DNS lookups; DNS-only reverse lookups for unknown internet IPs |
+| 🏠 **Local network grouping** | Local announcements such as mDNS, SSDP, LLMNR and NetBIOS are folded into a single row |
+| 🛡️ **Suspicious connection review** | Digital signature, run location, fake system file names, command line, parent process, IPs without DNS, suspicious ports, inbound connections → **suspicion score** |
+| 🆕 **First seen** | Learns your normal traffic and flags apps and addresses never seen before |
+| ✅ **Trusted list** | Mark apps and addresses you know to take them out of the warnings |
+| 🌍 **Multilingual** | English and Turkish; picked automatically from the Windows language, switchable from the menu |
+| ⚙️ **Gadget-like** | Borderless, translucent, draggable; always on top, tray icon, position and settings remembered |
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
-**Ayrıntı paneli**<br>
-<img src="docs/images/ayrinti-paneli.png" alt="Microsoft Edge'in ayrıntı paneli: imza, komut satırı, uç noktalar ve yerel ağ grubu">
+**Details panel**<br>
+<img src="docs/images/en/details.png" alt="Microsoft Edge details panel: signature, command line, endpoints and the local network group">
 
 </td>
 <td width="50%" valign="top">
 
-**Şüpheli bağlantı incelemesi**<br>
-<img src="docs/images/supheli-baglanti.png" alt="Temp klasöründen çalışan imzasız svch0st.exe için şüphe nedenleri">
+**Suspicious connection review**<br>
+<img src="docs/images/en/suspicious.png" alt="Suspicion reasons for an unsigned svch0st.exe running from the Temp folder">
 
 </td>
 </tr>
 </table>
 
-> Ekran görüntüleri örnek verilerle hazırlanmıştır.
+> Screenshots were made with sample data.
 
-## Gereksinimler
+## Requirements
 
-- Windows 10 veya Windows 11 (64 bit)
-- Windows PowerShell 5.1 ve .NET Framework 4.x — Windows'ta zaten yüklüdür
-- **Yönetici izni** (önerilir) — uygulama başına trafik ölçümü için gerekir; izin verilmezse sınırlı modda çalışır
+- Windows 10 or Windows 11 (64-bit)
+- Windows PowerShell 5.1 and .NET Framework 4.x — already installed with Windows
+- **Administrator rights** (recommended) — needed to measure per-app traffic; without them it runs in limited mode
 
-## Kurulum
+## Installation
 
-**Git ile:**
+**With Git:**
 
 ```bash
 git clone https://github.com/kubikanber/netgadget.git
 ```
 
-**ya da ZIP olarak:** sayfanın üstündeki **Code → Download ZIP** ile indirip istediğiniz bir klasöre çıkarın.
+**or as a ZIP:** download the latest `NetGadget-vX.Y.Z.zip` from [Releases](https://github.com/kubikanber/netgadget/releases/latest)
+(or **Code → Download ZIP**) and extract it to any folder.
 
-> ZIP ile indirdiyseniz Windows dosyaları "internetten geldi" olarak işaretler ve çalıştırırken uyarı gösterebilir.
-> Klasörde bir PowerShell penceresi açıp şunu bir kez çalıştırmanız yeterli:
+> Windows marks files downloaded as a ZIP as "from the internet" and may warn when you run them.
+> Open a PowerShell window in the folder and run this once:
 >
 > ```powershell
 > Get-ChildItem -Recurse | Unblock-File
 > ```
 
-## Başlatma
+## Getting started
 
-**`Baslat.cmd`** dosyasına çift tıklayın. Windows yönetici izni (UAC) ister:
+Double-click **`Baslat.cmd`** ("start"). Windows asks for administrator rights (UAC):
 
-| Sağ üstte yazan | Ne zaman | Ne gösterir |
+| Top-right shows | When | What you get |
 |---|---|---|
-| **canlı · TCP + UDP** | Yönetici izni verildiğinde | Her şey: uygulama başına TCP/UDP hızları, alan adları, tüm inceleme özellikleri |
-| **canlı · yalnızca TCP** | Yönetici izni var ama ETW başlatılamadıysa | Uygulama başına yalnızca TCP hızları |
-| **sınırlı mod** | İzin reddedildiğinde | Toplam hız, grafik ve TCP bağlantısı olan uygulamalar (uygulama başına hız yok) |
+| **live · TCP + UDP** | Administrator rights granted | Everything: per-app TCP/UDP speeds, domain names, all review features |
+| **live · TCP only** | Administrator rights, but ETW could not start | Per-app TCP speeds only |
+| **limited mode** | Administrator rights declined | Total speed, graph and apps with TCP connections (no per-app speed) |
 
-**Windows açılışında otomatik başlatmak için:** `Win + R` → `shell:startup` → açılan klasöre `Baslat.cmd` için bir
-kısayol koyun. Her açılışta yönetici izni sorulur.
+**To start with Windows:** `Win + R` → `shell:startup` → put a shortcut to `Baslat.cmd` in the folder that opens.
+You'll be asked for administrator rights at every start.
 
-## Kullanım
+## Usage
 
-### Ana pencere
+### Main window
 
-- **Üst kısım:** toplam indirme / yükleme hızı ve son 60 saniyenin grafiği (mavi ↓, turuncu ↑).
-- **Uygulama listesi:** her satırda uygulamanın simgesi, adı, bağlantı özeti (`TCP 6 · UDP 2 · yerel ağ 4 · alan adı`)
-  ve anlık hızı. Arkadaki mavi çubuk, uygulamanın o anki trafiğinin büyüklüğünü gösterir.
-- **Rozetler:** 🔴 `şüpheli` · 🟡 `dikkat` · 🔵 `yeni` · 🟢 `güvenilir`
-- **Alt satır:** uygulama ve bağlantı sayıları, dikkat gerektiren uygulama sayısı, öğrenme modu bilgisi.
+- **Top:** total download / upload speed and a graph of the last 60 seconds (blue ↓, orange ↑).
+- **App list:** each row shows the app's icon, name, a connection summary (`TCP 6 · UDP 2 · local 4 · domain`)
+  and its current speed. The blue bar behind it shows how much traffic the app has right now.
+- **Badges:** 🔴 `suspicious` · 🟡 `attention` · 🔵 `new` · 🟢 `trusted`
+- **Bottom line:** app and connection counts, number of apps needing attention, learning mode status.
 
-### Ayrıntı paneli
+### Details panel
 
-Bir uygulamaya **tıklayın**:
+**Click** an app:
 
-- PID'ler, oturum boyunca aktarılan toplam veri, dosya yolu, barındırılan Windows hizmetleri (svchost için)
-- **Dijital imza** ve imzalayan, **başlatan süreç**, kullanıcı, başlama zamanı, **komut satırı**, bağlantı beklenen portlar
-- Varsa **şüphe nedenleri** puanlarıyla birlikte
-- Bağlantılar: **Güvenilir olarak işaretle** · **Gezgin'de göster** · **Bilgileri kopyala** (tam rapor panoya)
-- Uç noktalar: `TCP`/`UDP` etiketi, alan adı, hizmet ve adres, hız, toplam; varsa ⚑ işaretleri
-  (`şüpheli port`, `DNS kaydı yok`, `internetten gelen`, `yeni`)
-- **Yerel ağ keşfi** satırı: tıklayınca yerel ağ duyuruları tek tek açılır
+- PIDs, total data transferred this session, file path, hosted Windows services (for svchost)
+- **Digital signature** and signer, **parent process**, user, start time, **command line**, listening ports
+- **Suspicion reasons** with their scores, if any
+- Links: **Mark as trusted** · **Show in Explorer** · **Copy details** (full report to the clipboard)
+- Endpoints: `TCP`/`UDP` tag, domain, service and address, speed, total; ⚑ flags if any
+  (`suspicious port`, `no DNS record`, `inbound from internet`, `new`)
+- **Local network discovery** row: click to expand the individual local announcements
 
-Bir **uç noktaya sağ tıklayın**: alan adını / IP'yi kopyalayın ya da **Bu uca güven** deyin.
+**Right-click an endpoint** to copy its domain / IP or choose **Trust this endpoint**.
 
-### Menü (sağ tık veya tepsi simgesi)
+### Menu (right-click or tray icon)
 
-| Seçenek | Açıklama |
+| Option | Description |
 |---|---|
-| Göster / Gizle | Pencereyi gizler; tepsi simgesine çift tıklayarak geri getirin |
-| Her zaman üstte | Pencere diğer pencerelerin üstünde kalır (varsayılan: açık) |
-| Yalnızca veri aktaranları göster | O an trafiği olmayan uygulamaları gizler |
-| **Sıralama** | Anlık hız · Oturum toplamı · Bağlantı sayısı · Ad (A–Z) · Şüphe puanı |
-| Tüm ayrıntıları kapat | Açık ayrıntı panellerini kapatır |
-| **Ad çözümleme** | *İnternet adresleri için ters DNS* (varsayılan: açık) · *Yerel cihaz adlarını çöz (NetBIOS/mDNS)* (varsayılan: kapalı) |
-| Kapat | Gadget'ı kapatır |
+| Show / Hide | Hides the window; double-click the tray icon to bring it back |
+| Always on top | Keeps the window above other windows (default: on) |
+| Show only apps transferring data | Hides apps with no traffic at the moment |
+| **Sort by** | Current speed · Session total · Connections · Name (A–Z) · Suspicion score |
+| Collapse all details | Closes all open details panels |
+| **Name resolution** | *Reverse DNS for internet addresses* (default: on) · *Resolve local device names (NetBIOS/mDNS)* (default: off) |
+| **Language / Dil** | *Automatic (Windows language)* · English · Türkçe — applied instantly and remembered |
+| Exit | Closes the gadget |
 
-Pencereyi başlığından veya grafikten tutup sürükleyin; konumu hatırlanır.
+Drag the window by its title or graph; its position is remembered.
 
-## Şüpheli bağlantı incelemesi
+## Suspicious connection review
 
-Her uygulama yerel kontrollerle puanlanır. Toplam puan **≥ 3** ise `dikkat`, **≥ 5** ise `şüpheli` rozeti çıkar.
-Hiçbir kontrol internete bağlanmaz.
+Every app is scored with local checks. A total of **≥ 3** shows an `attention` badge, **≥ 5** a `suspicious` badge.
+None of the checks connect to the internet.
 
-| İşaret | Puan |
+| Sign | Score |
 |---|:-:|
-| Sistem dosyası adını taşıyıp farklı konumda çalışmak (ör. `D:\svchost.exe`) | +5 |
-| Sistem dosyasına benzeyen ad (`svch0st`, `scvhost`) | +4 |
-| Dijital imza geçersiz / imzasız | +4 / +2 |
-| Temp, Geri Dönüşüm Kutusu, Public, PerfLogs klasöründen çalışmak | +3 – 4 |
-| İndirilenler, ProgramData kökü veya AppData\Roaming kökünden çalışmak | +2 |
-| PowerShell, mshta, rundll32, certutil gibi sistem araçlarının internete bağlanması | +2 |
-| Bu araçlarda şüpheli komut satırı (`-enc`, `DownloadString`, `-w hidden`, URL…) | +3 |
-| Bu araçların Office / PDF uygulaması tarafından başlatılması | +3 |
-| Arka kapı / IRC / Tor / madencilik portları (4444, 6667, 9001, 3333…) | +2 |
-| İnternetten gelen bağlantı kabul etmek | +2 |
-| DNS sorgusu görülmeden doğrudan IP'ye bağlanmak | +1 |
-| İmzası doğrulanmamış programın tüm ağ arayüzlerinde bağlantı beklemesi | +1 |
-| İlk kez internete bağlanmak | +1 |
+| Has a system file name but runs from another location (e.g. `D:\svchost.exe`) | +5 |
+| Name resembles a system file (`svch0st`, `scvhost`) | +4 |
+| Invalid / missing digital signature | +4 / +2 |
+| Runs from Temp, the Recycle Bin, Public or PerfLogs | +3 – 4 |
+| Runs from Downloads, the root of ProgramData or the root of AppData\Roaming | +2 |
+| A system tool such as PowerShell, mshta, rundll32 or certutil connects to the internet | +2 |
+| Suspicious command line for such a tool (`-enc`, `DownloadString`, `-w hidden`, a URL…) | +3 |
+| Such a tool was started by an Office / PDF application | +3 |
+| Backdoor / IRC / Tor / mining ports (4444, 6667, 9001, 3333…) | +2 |
+| Accepts incoming connections from the internet | +2 |
+| Connects directly to an IP without a DNS lookup | +1 |
+| A program without a verified signature listens on all network interfaces | +1 |
+| Connects to the internet for the first time | +1 |
 
-- **Öğrenme modu:** ilk çalıştırmada 5 dakika boyunca normal trafiğiniz kaydedilir ve hiçbir şey "yeni" sayılmaz.
-  Sonrasında daha önce hiç görülmemiş uygulama ve adresler 10 dakika boyunca `yeni` olarak işaretlenir.
-- **Güvenilir** işaretlenen uygulamanın puanı sıfırlanır; işaretler yine görünür ama sayılmaz.
-  Uç noktalar alan adı (ya da IP'nin /24 ağı) bazında güvenilir yapılır.
-- Bir puan tek başına "zararlı yazılım" anlamına gelmez; nereye bakmanız gerektiğini gösterir.
-  Örneğin tarayıcıların güvenli DNS (DoH) özelliği `DNS kaydı yok` işaretini tetikleyebilir.
+- **Learning mode:** on the first run your normal traffic is recorded for 5 minutes and nothing is marked "new".
+  After that, apps and addresses never seen before are marked `new` for 10 minutes.
+- An app marked **trusted** has its score reset to zero; its signs are still shown but not counted.
+  Endpoints are trusted per domain (or per /24 network of the IP).
+- A score alone does not mean "malware"; it shows you where to look.
+  For example, a browser's secure DNS (DoH) can trigger the `no DNS record` flag.
 
-## Gizlilik
+## Privacy
 
-- **Hiçbir veri bilgisayarınızın dışına gönderilmez.** Tüm ölçüm ve kontroller yereldir.
-- Gadget'ın kendisinin ürettiği tek ağ trafiği, alan adı bilinmeyen **internet** IP'leri için yapılan DNS ters
-  sorgularıdır (çok küçük; menüden kapatılabilir). Yerel ağ cihazları yalnızca siz açarsanız sorgulanır.
-- Bilgisayarınızda saklananlar (`%APPDATA%\NetGadget`):
+- **No data ever leaves your computer.** All measurements and checks are local.
+- The only network traffic the gadget itself creates is reverse DNS lookups for **internet** IPs without a known
+  name (very small; can be turned off in the menu). Local network devices are only queried if you enable it.
+- Stored on your computer (`%APPDATA%\NetGadget`):
 
-  | Dosya | İçerik |
+  | File | Contents |
   |---|---|
-  | `settings.json` | Pencere konumu ve menü seçimleri |
-  | `known.tsv` | Daha önce görülmüş uygulama ve adresler ("ilk kez görüldü" için) |
-  | `trusted.tsv` | Güvenilir listesi |
+  | `settings.json` | Window position, language and menu choices |
+  | `known.tsv` | Apps and addresses seen before (for "first seen") |
+  | `trusted.tsv` | Trusted list |
 
-  Bu klasörü silmek tüm ayarları ve öğrenilmiş trafiği sıfırlar.
+  Deleting this folder resets all settings and the learned traffic.
 
-## Nasıl çalışır?
+## How does it work?
 
 ```mermaid
 flowchart LR
     subgraph Windows
-        KN["ETW<br/>Kernel-Network<br/>(her TCP/UDP paketi)"]
-        DNS["ETW<br/>DNS-Client<br/>(alan adı yanıtları)"]
-        TBL["TCP bağlantı<br/>tablosu"]
-        WMI["WMI<br/>(komut satırı, üst süreç,<br/>hizmetler)"]
-        SIG["Authenticode<br/>(dijital imza)"]
+        KN["ETW<br/>Kernel-Network<br/>(every TCP/UDP packet)"]
+        DNS["ETW<br/>DNS-Client<br/>(name lookups)"]
+        TBL["TCP connection<br/>table"]
+        WMI["WMI<br/>(command line, parent,<br/>services)"]
+        SIG["Authenticode<br/>(digital signature)"]
     end
-    KN --> S["NetSampler.cs<br/>akışlar, hızlar,<br/>uygulama gruplama"]
+    KN --> S["NetSampler.cs<br/>flows, speeds,<br/>app grouping"]
     DNS --> S
     TBL --> S
-    S --> I["Inspector.cs<br/>şüphe puanı,<br/>yeni / güvenilir"]
+    S --> I["Inspector.cs<br/>suspicion score,<br/>new / trusted"]
     WMI --> I
     SIG --> I
-    I --> UI["NetGadget.ps1<br/>WPF arayüz"]
+    I --> UI["NetGadget.ps1<br/>WPF interface"]
     S --> UI
 ```
 
-- **Trafik:** Kaynak İzleyicisi'nin de kullandığı `Microsoft-Windows-Kernel-Network` ETW sağlayıcısı, her gönderilen ve
-  alınan paketi süreç kimliğiyle bildirir. ETW başlatılamazsa TCP EStats sayaçlarına, yönetici izni yoksa yalnızca TCP
-  bağlantı tablosuna geri düşülür.
-- **Alan adları:** `Microsoft-Windows-DNS-Client` ETW olayları ve Windows DNS önbelleği; gerekirse yalnızca DNS ile
-  (NetBIOS/mDNS kapalı) ters sorgu.
-- **İnceleme:** dijital imza `Get-AuthenticodeSignature` ile, süreç bilgileri WMI ile arka planda okunur ve önbelleğe alınır.
-- **Arayüz:** WPF; C# kodu çalışma anında `Add-Type` ile derlenir, ayrı bir derleme adımı yoktur.
+- **Traffic:** the `Microsoft-Windows-Kernel-Network` ETW provider — the same source Resource Monitor uses — reports
+  every sent and received packet with its process ID. If ETW can't start, it falls back to TCP EStats counters, and
+  without administrator rights to the TCP connection table only.
+- **Domain names:** `Microsoft-Windows-DNS-Client` ETW events and the Windows DNS cache; if needed, a DNS-only
+  reverse lookup (NetBIOS/mDNS off).
+- **Review:** the digital signature is read with `Get-AuthenticodeSignature` and process details with WMI, in the
+  background and cached.
+- **Interface:** WPF; the C# code is compiled at runtime with `Add-Type`, there is no separate build step.
+- **Languages:** all texts live in `lang\<language>.json` files (like `"menu.sort": "Sort by"`). Any text missing in a
+  language falls back to English. See [CONTRIBUTING.md](CONTRIBUTING.md#yeni-dil-ekleme) to add a language.
 
-## Sorun giderme
+## Troubleshooting
 
 <details>
-<summary><b>Sağ üstte "sınırlı mod" yazıyor, hızlar görünmüyor</b></summary>
+<summary><b>It says "limited mode" at the top right and shows no speeds</b></summary>
 
-Yönetici izni verilmedi. Gadget'ı kapatıp `Baslat.cmd` ile yeniden başlatın ve UAC penceresinde **Evet** deyin.
+Administrator rights were not granted. Close the gadget, start it again with `Baslat.cmd` and choose **Yes** in the
+UAC prompt.
 </details>
 
 <details>
-<summary><b>"canlı · yalnızca TCP" yazıyor</b></summary>
+<summary><b>It says "live · TCP only"</b></summary>
 
-ETW oturumu başlatılamadı. Alt satırdaki hata koduna bakın. Genellikle önceki çalıştırmadan kalan bir oturumdur ve
-yeniden başlatınca düzelir; düzelmezse yönetici PowerShell'de:
+The ETW session could not be started; check the error code on the bottom line. It's usually a session left over from
+a previous run and goes away after a restart. If not, run this in an administrator PowerShell:
 
 ```powershell
 logman stop NetGadget-KernelNetwork -ets
@@ -226,84 +235,94 @@ logman stop NetGadget-KernelNetwork -ets
 </details>
 
 <details>
-<summary><b>Çift tıklayınca hiçbir şey olmuyor</b></summary>
+<summary><b>Nothing happens when I double-click it</b></summary>
 
-Gadget zaten açık olabilir (aynı anda yalnızca bir tane çalışır); tepsi simgesine çift tıklayın.
-ZIP ile indirdiyseniz yukarıdaki `Unblock-File` adımını yapın. Antivirüs yazılımları PowerShell'in kod derlemesini
-engelleyebilir; gerekirse klasörü istisnalara ekleyin.
+The gadget may already be running (only one instance runs at a time); double-click the tray icon.
+If you downloaded a ZIP, do the `Unblock-File` step above. Antivirus software can block PowerShell from compiling
+code; add the folder to its exclusions if needed.
 </details>
 
 <details>
-<summary><b>Bazı adresler alan adı yerine IP olarak görünüyor</b></summary>
+<summary><b>Some addresses show an IP instead of a domain name</b></summary>
 
-Uygulama DNS'i Windows'u atlayarak kendisi çözüyor olabilir (tarayıcılarda "güvenli DNS"), bağlantı gadget
-açılmadan önce kurulmuş olabilir ya da IP'nin ters DNS kaydı yoktur.
+The app may resolve DNS itself and bypass Windows (a browser's "secure DNS"), the connection may have been made
+before the gadget started, or the IP has no reverse DNS record.
 </details>
 
 <details>
-<summary><b>Kaldırma</b></summary>
+<summary><b>The gadget opens in the wrong language</b></summary>
 
-Gadget'ı kapatın, klasörü silin ve isterseniz `%APPDATA%\NetGadget` klasörünü de silin. Başka hiçbir yere dosya yazılmaz.
+With the language set to "Automatic", the Windows display language is used. Right-click → **Language / Dil** and
+pick a language; your choice is remembered.
 </details>
 
-## Yol haritası
+<details>
+<summary><b>Uninstalling</b></summary>
 
-### ✅ 1. aşama — Yerel kontroller (tamamlandı)
+Close the gadget, delete its folder and, if you like, the `%APPDATA%\NetGadget` folder. Nothing is written anywhere else.
+</details>
 
-- [x] Dijital imza ve imzalayan
-- [x] Çalıştığı klasör ve sahte / benzer sistem dosyası adları
-- [x] Komut satırı, başlatan süreç, kullanıcı, başlama zamanı
-- [x] DNS sorgusu görülmeden IP'ye bağlanma
-- [x] Gelen bağlantılar ve bağlantı beklenen portlar
-- [x] Şüpheli portlar (arka kapı, IRC, Tor, madencilik)
-- [x] "İlk kez görüldü" (öğrenme modu ile)
-- [x] Şüphe puanı, rozetler ve nedenler
-- [x] Güvenilir listesi (uygulama ve uç nokta)
+## Roadmap
 
-### 🔜 2. aşama — Geçmiş ve davranış
+### ✅ Phase 1 — Local checks (done)
 
-- [ ] **Kalıcı bağlantı geçmişi:** hangi uygulama, hangi uca, ilk / son ne zaman, ne kadar veri — gadget kapansa da saklanır
-- [ ] **Düzenli aralıkla bağlanma (beaconing) tespiti:** saat gibi düzenli küçük bağlantılar — arka kapıların tipik "eve haber verme" davranışı
-- [ ] **Yükleme / indirme oranı uyarısı:** normalde indiren bir uygulamanın birden çok veri yüklemeye başlaması
-- [ ] **Arka plan etkinliği:** penceresi olmayan programların, bilgisayar boştayken veri göndermesi
-- [ ] **Windows bildirimleri:** yüksek puanlı yeni bir bağlantı görüldüğünde
-- [ ] **Takip listesi:** özellikle izlenecek uygulama ve adresler
-- [ ] **İnceleme penceresi:** büyük, boyutu değiştirilebilen pencere — Süreç, Bağlantılar, Zaman çizelgesi (uygulama bazında grafik), Uç nokta bilgisi sekmeleri
+- [x] Digital signature and signer
+- [x] Run location and fake / look-alike system file names
+- [x] Command line, parent process, user, start time
+- [x] Connections to IPs without a DNS lookup
+- [x] Inbound connections and listening ports
+- [x] Suspicious ports (backdoor, IRC, Tor, mining)
+- [x] "First seen" (with learning mode)
+- [x] Suspicion score, badges and reasons
+- [x] Trusted list (apps and endpoints)
 
-### 🔭 3. aşama — Dış kaynaklar ve müdahale
+### 🔜 Phase 2 — History and behavior
 
-Hepsi isteğe bağlı olacak ve açıkça onayınızla çalışacak.
+- [ ] **Persistent connection history:** which app, which endpoint, first / last seen, how much data — kept after the gadget closes
+- [ ] **Beaconing detection:** small connections at clock-like intervals — the typical "phone home" pattern of backdoors
+- [ ] **Upload / download ratio alert:** an app that normally downloads suddenly uploading a lot
+- [ ] **Background activity:** windowless programs sending data while the computer is idle
+- [ ] **Windows notifications:** when a new high-score connection appears
+- [ ] **Watch list:** apps and addresses to keep a closer eye on
+- [ ] **Investigation window:** a large, resizable window with Process, Connections, Timeline (per-app graph) and Endpoint tabs
 
-- [ ] **Ülke ve barındırıcı firma (ASN):** çevrimdışı veritabanıyla — IP'ler hiçbir yere gönderilmez
-- [ ] **Yerel kara listeler:** abuse.ch Feodo Tracker, Spamhaus DROP gibi listelerle bilgisayarınızda eşleştirme
-- [ ] **İtibar sorguları:** VirusTotal / AbuseIPDB (varsayılan kapalı, API anahtarı gerekir)
-- [ ] **Dosya parmak izi (SHA-256)** ve VirusTotal'da arama bağlantısı
-- [ ] **Windows Güvenlik Duvarı ile engelleme:** uygulama ya da IP bazında, geri alınabilir
-- [ ] **Paket yakalama:** Windows'un yerleşik `pktmon` aracıyla yalnızca seçilen uygulama / IP için kısa kayıt (Wireshark'ta açılabilir; HTTPS'in hangi siteye gittiğini gösteren TLS SNI dahil)
-- [ ] **Rapor dışa aktarma:** HTML / CSV
+### 🔭 Phase 3 — External sources and response
 
-Öneri ve hata bildirimleri için [Issues](https://github.com/kubikanber/netgadget/issues) sayfasını kullanabilirsiniz.
-Güvenlik açıklarını lütfen [SECURITY.md](SECURITY.md) dosyasındaki gizli bildirim yoluyla iletin.
-Katkı yapmak isterseniz [CONTRIBUTING.md](CONTRIBUTING.md); sürümlerdeki değişiklikler için [CHANGELOG.md](CHANGELOG.md).
+All optional and only with your explicit consent.
 
-## Sınırlamalar
+- [ ] **Country and hosting provider (ASN):** from an offline database — IPs are never sent anywhere
+- [ ] **Local blocklists:** matched on your computer against lists such as abuse.ch Feodo Tracker and Spamhaus DROP
+- [ ] **Reputation lookups:** VirusTotal / AbuseIPDB (off by default, API key required)
+- [ ] **File fingerprint (SHA-256)** with a VirusTotal search link
+- [ ] **Blocking with Windows Firewall:** per app or IP, reversible
+- [ ] **Packet capture:** a short capture of the selected app / IP only, with Windows' built-in `pktmon` (opens in Wireshark; includes the TLS SNI that shows which site HTTPS goes to)
+- [ ] **Report export:** HTML / CSV
 
-- Şifreli trafiğin (HTTPS/QUIC) **içeriği** görülmez; görülen şey kimin, nereye, ne zaman, ne kadar veri gönderdiğidir.
-- ICMP (ping) gibi TCP/UDP dışı trafik toplam hıza dahildir ama uygulamalara dağıtılmaz.
-- Etkinliği biten UDP uçları ve kapanan TCP bağlantıları 30 saniye daha listede kalır.
-- Yerel (loopback) trafik listelenmez.
+Use [Issues](https://github.com/kubikanber/netgadget/issues) for suggestions and bug reports.
+Please report security vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+Contributing: [CONTRIBUTING.md](CONTRIBUTING.md); release history: [CHANGELOG.md](CHANGELOG.md)
+(these documents are currently in Turkish).
 
-## Dosyalar
+## Limitations
 
-| Dosya | Açıklama |
+- The **content** of encrypted traffic (HTTPS/QUIC) is not visible; what you see is who sends how much data, where and when.
+- Non-TCP/UDP traffic such as ICMP (ping) is included in the totals but not attributed to apps.
+- Finished UDP endpoints and closed TCP connections stay in the list for 30 more seconds.
+- Local (loopback) traffic is not listed.
+
+## Files
+
+| File | Description |
 |---|---|
-| `Baslat.cmd` | Başlatıcı |
-| `NetGadget.ps1` | Arayüz, menü, ayarlar |
-| `NetSampler.cs` | ETW, bağlantı tabloları, alan adları, uygulama gruplama |
-| `Inspector.cs` | İmza, süreç bilgisi, şüphe puanı, "ilk kez görüldü", güvenilir listesi |
-| `docs/images/` | README ekran görüntüleri |
-| `CHANGELOG.md` · `CONTRIBUTING.md` · `SECURITY.md` | Değişiklik günlüğü, katkı rehberi, güvenlik politikası |
+| `Baslat.cmd` | Launcher |
+| `NetGadget.ps1` | Interface, menu, settings |
+| `NetSampler.cs` | ETW, connection tables, domain names, app grouping |
+| `Inspector.cs` | Signature, process details, suspicion score, "first seen", trusted list |
+| `lang/` | Interface languages (`en.json`, `tr.json`) |
+| `tools/Test-Translations.ps1` | Checks language files for missing / unused keys |
+| `docs/images/` | README screenshots (`en/`, `tr/`) |
+| `CHANGELOG.md` · `CONTRIBUTING.md` · `SECURITY.md` | Release history, contributing guide, security policy |
 
-## Lisans
+## License
 
 [MIT](LICENSE) © 2026 kubikanber

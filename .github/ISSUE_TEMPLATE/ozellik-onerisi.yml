@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Önerinizden önce README'deki [Yol haritası](https://github.com/kubikanber/netgadget#yol-haritası)
+        Önerinizden önce README'deki [Yol haritası](https://github.com/kubikanber/netgadget/blob/main/README.tr.md#yol-haritası)
         bölümüne göz atın; belki zaten planlanmıştır.
 
   - type: textarea

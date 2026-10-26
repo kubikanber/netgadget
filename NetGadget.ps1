@@ -5,10 +5,12 @@
 
     -NoElevate   Yönetici izni istemeden (sınırlı modda) başlat.
     -Snapshot    Pencereyi ekran dışında açıp verilen yola PNG kaydeder ve çıkar (test için).
+    -Language    Arayüz dili (lang klasöründeki dosya adı, ör. tr, en; "auto" = Windows dili).
 #>
 param(
     [switch]$NoElevate,
-    [string]$Snapshot
+    [string]$Snapshot,
+    [string]$Language
 )
 
 $ErrorActionPreference = 'Stop'
@@ -39,7 +41,7 @@ $settingsDir = Join-Path $env:APPDATA 'NetGadget'
 $settingsPath = Join-Path $settingsDir 'settings.json'
 $settings = [pscustomobject]@{
     Left = $null; Top = $null; Topmost = $true; ActiveOnly = $false; MaxRows = 10
-    ReverseDns = $true; LocalNames = $false; SortBy = 'Rate'
+    ReverseDns = $true; LocalNames = $false; SortBy = 'Rate'; Language = 'auto'
 }
 if (-not $Snapshot -and (Test-Path $settingsPath)) {
     try {
@@ -50,14 +52,53 @@ if (-not $Snapshot -and (Test-Path $settingsPath)) {
     } catch { }
 }
 
-$SortModes = [ordered]@{
-    Rate        = @{ Label = 'Anlık hız'; Head = 'anlık hıza göre' }
-    Session     = @{ Label = 'Oturum toplamı'; Head = 'oturum toplamına göre' }
-    Connections = @{ Label = 'Bağlantı sayısı'; Head = 'bağlantı sayısına göre' }
-    Name        = @{ Label = 'Ad (A–Z)'; Head = 'ada göre' }
-    Risk        = @{ Label = 'Şüphe puanı'; Head = 'şüphe puanına göre' }
-}
+# Sıralama modu → dil anahtarı öneki (sort.<önek>.label / sort.<önek>.head)
+$SortModes = [ordered]@{ Rate = 'rate'; Session = 'session'; Connections = 'connections'; Name = 'name'; Risk = 'risk' }
 if (-not $SortModes.Contains([string]$settings.SortBy)) { $settings.SortBy = 'Rate' }
+
+# ---------- Dil ----------
+# lang\<kod>.json dosyaları düz "anahtar": "metin" çiftleridir; eksik anahtarlar en.json'dan gelir.
+$langDir = Join-Path $PSScriptRoot 'lang'
+
+function Read-LangFile([string]$code) {
+    $d = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+    $path = Join-Path $langDir "$code.json"
+    if (Test-Path $path) {
+        try {
+            $obj = [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) | ConvertFrom-Json
+            foreach ($p in $obj.PSObject.Properties) { $d[$p.Name] = [string]$p.Value }
+        } catch { }
+    }
+    return , $d
+}
+
+$Languages = [ordered]@{}
+foreach ($f in Get-ChildItem -Path $langDir -Filter '*.json' -ErrorAction SilentlyContinue | Sort-Object Name) {
+    $Languages[$f.BaseName] = (Read-LangFile $f.BaseName)['language.name']
+}
+$fallbackStrings = Read-LangFile 'en'
+
+# "auto" ya da bulunmayan bir dil seçiliyse Windows'un arayüz dili, o da yoksa İngilizce.
+function Resolve-Language([string]$choice) {
+    if ($choice -and $choice -ne 'auto' -and $Languages.Contains($choice)) { return $choice }
+    $windowsLang = (Get-UICulture).TwoLetterISOLanguageName
+    if ($Languages.Contains($windowsLang)) { return $windowsLang }
+    return 'en'
+}
+
+function Set-Language([string]$choice) {
+    $code = Resolve-Language $choice
+    $strings = Read-LangFile $code
+    $culture = if ($strings.ContainsKey('language.culture')) { $strings['language.culture'] } else { $code }
+    [NetGadget.Loc]::Set($strings, $fallbackStrings, $culture)
+    $script:LanguageCode = $code
+}
+
+# Çeviri: T 'anahtar' [değer0] [değer1] ...
+function T([string]$Key) { [NetGadget.Loc]::T($Key, [object[]]$args) }
+
+if ($Language) { $settings.Language = $Language }
+Set-Language $settings.Language
 
 function Save-Settings {
     if ($Snapshot) { return }
@@ -71,7 +112,7 @@ function Save-Settings {
 [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ağ Etkinliği" Width="408" SizeToContent="Height"
+        Title="NetGadget" Width="408" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ShowInTaskbar="False" ResizeMode="NoResize" FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Display" UseLayoutRounding="True">
@@ -112,7 +153,7 @@ function Save-Settings {
       <Grid>
         <StackPanel Orientation="Horizontal">
           <Ellipse x:Name="LiveDot" Width="7" Height="7" Fill="#FF4CD07D" VerticalAlignment="Center" Margin="0,1,7,0"/>
-          <TextBlock Text="Ağ Etkinliği" Foreground="#FFF2F4F7" FontSize="14" FontWeight="SemiBold"/>
+          <TextBlock x:Name="TitleText" Foreground="#FFF2F4F7" FontSize="14" FontWeight="SemiBold"/>
         </StackPanel>
         <TextBlock x:Name="ModeText" HorizontalAlignment="Right" VerticalAlignment="Center"
                    FontSize="10.5" Foreground="#FF8B95A1"/>
@@ -121,11 +162,11 @@ function Save-Settings {
       <Grid Margin="0,10,0,0">
         <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
         <StackPanel>
-          <TextBlock Text="↓ İNDİRME" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF8B95A1"/>
+          <TextBlock x:Name="HeadDown" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF8B95A1"/>
           <TextBlock x:Name="TotalIn" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#FF4FC3F7"/>
         </StackPanel>
         <StackPanel Grid.Column="1">
-          <TextBlock Text="↑ YÜKLEME" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF8B95A1"/>
+          <TextBlock x:Name="HeadUp" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF8B95A1"/>
           <TextBlock x:Name="TotalOut" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#FFFFB74D"/>
         </StackPanel>
       </Grid>
@@ -141,7 +182,7 @@ function Save-Settings {
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*"/><ColumnDefinition Width="68"/><ColumnDefinition Width="68"/>
         </Grid.ColumnDefinitions>
-        <TextBlock x:Name="HeadApp" Text="UYGULAMA" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF6B7480"/>
+        <TextBlock x:Name="HeadApp" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF6B7480"/>
         <TextBlock x:Name="HeadIn" Grid.Column="1" Text="↓" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF6B7480" HorizontalAlignment="Right" Margin="0,0,6,0"/>
         <TextBlock x:Name="HeadOut" Grid.Column="2" Text="↑" FontSize="9.5" FontWeight="SemiBold" Foreground="#FF6B7480" HorizontalAlignment="Right" Margin="0,0,6,0"/>
       </Grid>
@@ -157,10 +198,18 @@ function Save-Settings {
 
 $window = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $xaml))
 $ui = @{}
-foreach ($n in 'Root', 'LiveDot', 'ModeText', 'TotalIn', 'TotalOut', 'Graph', 'LineIn', 'LineOut', 'HeadApp', 'HeadIn', 'HeadOut',
-    'Scroller', 'List', 'Footer') {
+foreach ($n in 'Root', 'LiveDot', 'TitleText', 'ModeText', 'HeadDown', 'HeadUp', 'TotalIn', 'TotalOut', 'Graph', 'LineIn',
+    'LineOut', 'HeadApp', 'HeadIn', 'HeadOut', 'Scroller', 'List', 'Footer') {
     $ui[$n] = $window.FindName($n)
 }
+
+function Update-StaticText {
+    $window.Title = T 'app.title'
+    $ui.TitleText.Text = T 'app.title'
+    $ui.HeadDown.Text = T 'head.download'
+    $ui.HeadUp.Text = T 'head.upload'
+}
+Update-StaticText
 $ui.Scroller.MaxHeight = [Math]::Max(240, [System.Windows.SystemParameters]::WorkArea.Height - 290)
 
 $brushConv = New-Object Windows.Media.BrushConverter
@@ -235,7 +284,7 @@ function New-RateText([double]$rate, $brush, [double]$size) {
 
 function Format-Age([datetime]$utc) {
     $s = [int]([DateTime]::UtcNow - $utc).TotalSeconds
-    if ($s -lt 2) { 'şimdi' } else { "$s sn önce" }
+    if ($s -lt 2) { T 'age.now' } else { T 'age.seconds' $s }
 }
 
 # Tıklanınca $expanded içindeki anahtarı aç/kapatır (pencere sürüklemesini başlatmaz).
@@ -296,12 +345,12 @@ function New-DiscoveryBlock($app, [bool]$rates) {
     $names = New-Object Windows.Controls.StackPanel
     $names.Margin = '0,0,6,0'
     $chevron = if ($open) { '▾' } else { '▸' }
-    [void]$names.Children.Add((New-Text "$chevron Yerel ağ keşfi" 11 $brText))
+    [void]$names.Children.Add((New-Text "$chevron $(T 'lan.title')" 11 $brText))
     $services = @($app.Discovery | ForEach-Object { $_.Service } | Where-Object { $_ } | Select-Object -Unique)
     $bits = @()
     if ($services.Count -gt 0) { $bits += ($services -join ', ') }
-    $bits += "$($app.Discovery.Count) uç"
-    if ($app.LocalDevices -gt 0) { $bits += "$($app.LocalDevices) cihaz" }
+    $bits += T 'lan.endpoints' $app.Discovery.Count
+    if ($app.LocalDevices -gt 0) { $bits += T 'lan.devices' $app.LocalDevices }
     if ($rates -and $total -gt 0) { $bits += "Σ " + [NetGadget.Sampler]::FormatBytes($total) }
     [void]$names.Children.Add((New-Text ($bits -join ' · ') 9.5 $brDim))
     [Windows.Controls.Grid]::SetColumn($names, 1)
@@ -348,14 +397,14 @@ function New-Link([string]$text, $tag) {
 }
 
 function Get-AppReport($app) {
-    $lines = @("Uygulama: $($app.Name)", "Yol: $($app.Path)", "PID: $($app.Pids -join ', ')")
-    if ($app.Signer -or $app.SignStatus) { $lines += "İmza: $($app.SignStatus) $($app.Signer)" }
-    if ($app.ParentName) { $lines += "Başlatan: $($app.ParentName) (PID $($app.ParentPid))" }
-    if ($app.User) { $lines += "Kullanıcı: $($app.User)" }
-    if ($app.CommandLine) { $lines += "Komut satırı: $($app.CommandLine)" }
-    if ($app.Listening.Count -gt 0) { $lines += "Dinliyor: $($app.Listening -join ', ')" }
-    if ($app.Reasons.Count -gt 0) { $lines += "Şüphe puanı: $($app.Score)"; $lines += @($app.Reasons | ForEach-Object { "  $_" }) }
-    $lines += 'Uç noktalar:'
+    $lines = @((T 'report.app' $app.Name), (T 'report.path' $app.Path), (T 'report.pid' ($app.Pids -join ', ')))
+    if ($app.Signer -or $app.SignStatus) { $lines += T 'report.signature' $app.SignStatus $app.Signer }
+    if ($app.ParentName) { $lines += T 'report.parent' $app.ParentName $app.ParentPid }
+    if ($app.User) { $lines += T 'report.user' $app.User }
+    if ($app.CommandLine) { $lines += T 'report.cmdline' $app.CommandLine }
+    if ($app.Listening.Count -gt 0) { $lines += T 'report.listening' ($app.Listening -join ', ') }
+    if ($app.Reasons.Count -gt 0) { $lines += T 'report.score' $app.Score; $lines += @($app.Reasons | ForEach-Object { "  $_" }) }
+    $lines += T 'report.endpoints'
     foreach ($ep in @($app.Endpoints) + @($app.Discovery)) {
         $flags = if ($ep.Flags.Count -gt 0) { ' [' + ($ep.Flags -join ', ') + ']' } else { '' }
         $lines += "  $($ep.Protocol) $($ep.Display) $($ep.Address):$($ep.Port) $($ep.Service)$flags"
@@ -382,14 +431,14 @@ function Show-EndpointMenu($t) {
     $m = New-Object System.Windows.Forms.ContextMenuStrip
     $addr = if ($ep.Address.Contains(':')) { "[$($ep.Address)]:$($ep.Port)" } else { "$($ep.Address):$($ep.Port)" }
     foreach ($text in @($ep.Display, $addr) | Select-Object -Unique) {
-        $mi = New-Object System.Windows.Forms.ToolStripMenuItem("Kopyala: $text")
+        $mi = New-Object System.Windows.Forms.ToolStripMenuItem((T 'epmenu.copy' $text))
         $mi.Tag = @{ Action = 'copytext'; Text = $text }
         $mi.Add_Click({ param($sender, $e) Invoke-DetailAction $sender.Tag })
         [void]$m.Items.Add($mi)
     }
     if ($ep.DomainKey -and $t.App.StoreKey) {
         [void]$m.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
-        $label = if ($ep.Trusted) { "Güveni kaldır ($($ep.DomainKey))" } else { "Bu uca güven ($($ep.DomainKey))" }
+        $label = if ($ep.Trusted) { T 'epmenu.untrust' $ep.DomainKey } else { T 'epmenu.trust' $ep.DomainKey }
         $mi = New-Object System.Windows.Forms.ToolStripMenuItem($label)
         $mi.Tag = @{ Action = 'eptrust'; App = $t.App; Ep = $ep }
         $mi.Add_Click({ param($sender, $e) Invoke-DetailAction $sender.Tag })
@@ -418,17 +467,16 @@ function New-EndpointRow($ep, [bool]$rates, $app) {
     $bits = @()
     if ($ep.Service) { $bits += $ep.Service }
     $addr = if ($ep.Address.Contains(':')) { "[$($ep.Address)]:$($ep.Port)" } else { "$($ep.Address):$($ep.Port)" }
-    $bits += if ($ep.Host) { $addr } else { "port $($ep.Port)" }
-    if ($isTcp -and $ep.Count -gt 1) { $bits += "$($ep.Count) bağlantı" }
-    if ($isTcp -and -not $ep.Open) { $bits += 'kapandı' }
+    $bits += if ($ep.Host) { $addr } else { T 'ep.port' $ep.Port }
+    if ($isTcp -and $ep.Count -gt 1) { $bits += T 'ep.connections' $ep.Count }
+    if ($isTcp -and -not $ep.Open) { $bits += T 'ep.closed' }
     elseif ($ep.Total -le 0 -and ($ep.TotalIn + $ep.TotalOut) -gt 0) { $bits += Format-Age $ep.LastSeen }
     if ($rates -and ($ep.TotalIn + $ep.TotalOut) -gt 0) {
         $bits += "Σ " + [NetGadget.Sampler]::FormatBytes($ep.TotalIn + $ep.TotalOut)
     }
     [void]$names.Children.Add((New-Text ($bits -join ' · ') 9.5 $brDim))
     if ($ep.Flags.Count -gt 0) {
-        $risky = -not $ep.Trusted -and @($ep.Flags | Where-Object { $_ -match '^(şüpheli port|DNS kaydı yok|internetten gelen)' }).Count -gt 0
-        $fb = if ($risky) { $brAmber } elseif ($ep.Trusted) { $brGreen } else { $brBlue }
+        $fb = if ($ep.Risky) { $brAmber } elseif ($ep.Trusted) { $brGreen } else { $brBlue }
         [void]$names.Children.Add((New-Text ('⚑ ' + ($ep.Flags -join ' · ')) 9.5 $fb))
     }
     [Windows.Controls.Grid]::SetColumn($names, 1)
@@ -453,33 +501,35 @@ function New-SecuritySection($app) {
 
     if ($app.Path) {
         switch ($app.SignStatus) {
-            'Valid' { $txt = "✓ İmzalı: $($app.Signer)"; $br = $brGreen }
-            'NotSigned' { $txt = '⚠ Dijital imzası yok'; $br = $brAmber }
-            'Invalid' { $txt = "✗ İmza geçersiz $(if ($app.Signer) { "($($app.Signer))" })"; $br = $brRed }
-            'Unknown' { $txt = 'İmza denetlenemedi'; $br = $brDim }
-            default { $txt = 'İmza denetleniyor…'; $br = $brDim }
+            'Valid' { $txt = T 'sig.valid' $app.Signer; $br = $brGreen }
+            'NotSigned' { $txt = T 'sig.unsigned'; $br = $brAmber }
+            'Invalid' { $txt = "$(T 'sig.invalid') $(if ($app.Signer) { "($($app.Signer))" })"; $br = $brRed }
+            'Unknown' { $txt = T 'sig.unknown'; $br = $brDim }
+            default { $txt = T 'sig.pending'; $br = $brDim }
         }
         [void]$sp.Children.Add((New-Text $txt 9.5 $br))
     }
 
     $who = @()
-    if ($app.ParentName) { $who += "Başlatan: $($app.ParentName) (PID $($app.ParentPid))" }
-    if ($app.User) { $who += "Kullanıcı: $($app.User)" }
-    if ($app.StartTime -gt [datetime]'2000-01-01') { $who += "Başladı: $($app.StartTime.ToString('dd.MM HH:mm'))" }
+    if ($app.ParentName) { $who += T 'detail.parent' $app.ParentName $app.ParentPid }
+    if ($app.User) { $who += T 'detail.user' $app.User }
+    if ($app.StartTime -gt [datetime]'2000-01-01') {
+        $who += T 'detail.started' $app.StartTime.ToString((T 'format.datetime'), [NetGadget.Loc]::Culture)
+    }
     if ($who.Count -gt 0) { [void]$sp.Children.Add((New-WrapText ($who -join ' · ') $brSub)) }
 
     if ($app.CommandLine) {
         $cl = $app.CommandLine
         if ($cl.Length -gt 400) { $cl = $cl.Substring(0, 400) + '…' }
-        [void]$sp.Children.Add((New-WrapText "Komut satırı: $cl" $brDim))
+        [void]$sp.Children.Add((New-WrapText (T 'detail.cmdline' $cl) $brDim))
     }
     if ($app.Listening.Count -gt 0) {
-        [void]$sp.Children.Add((New-WrapText "Bağlantı bekliyor (TCP): $($app.Listening -join ', ')" $brSub))
+        [void]$sp.Children.Add((New-WrapText (T 'detail.listening' ($app.Listening -join ', ')) $brSub))
     }
 
     if ($app.Reasons.Count -gt 0) {
-        $head = "Neden işaretlendi (şüphe puanı $($app.Score)):"
-        if ($app.Trusted) { $head = 'Güvenilir olarak işaretli — aşağıdaki işaretler puana katılmıyor:' }
+        $head = T 'detail.reasons' $app.Score
+        if ($app.Trusted) { $head = T 'detail.trustednote' }
         $hb = if ($app.Trusted) { $brGreen } elseif ($app.Level -ge 3) { $brRed } elseif ($app.Level -ge 2) { $brAmber } else { $brSub }
         $h = New-Text $head 9.5 $hb
         $h.Margin = '0,4,0,1'
@@ -491,11 +541,11 @@ function New-SecuritySection($app) {
     $links = New-Object Windows.Controls.WrapPanel
     $links.Margin = '0,5,0,0'
     if ($app.StoreKey) {
-        $label = if ($app.Trusted) { 'Güveni kaldır' } else { 'Güvenilir olarak işaretle' }
+        $label = if ($app.Trusted) { T 'link.untrust' } else { T 'link.trust' }
         [void]$links.Children.Add((New-Link $label @{ Action = 'trust'; App = $app }))
     }
-    if ($app.Path) { [void]$links.Children.Add((New-Link "Gezgin'de göster" @{ Action = 'explorer'; App = $app })) }
-    [void]$links.Children.Add((New-Link 'Bilgileri kopyala' @{ Action = 'copy'; App = $app }))
+    if ($app.Path) { [void]$links.Children.Add((New-Link (T 'link.explorer') @{ Action = 'explorer'; App = $app })) }
+    [void]$links.Children.Add((New-Link (T 'link.copy') @{ Action = 'copy'; App = $app }))
     [void]$sp.Children.Add($links)
     $sp
 }
@@ -510,7 +560,7 @@ function New-DetailPanel($app, [bool]$rates) {
 
     $info = @("PID $($app.Pids -join ', ')")
     if ($rates) {
-        $info += "oturumda ↓ $([NetGadget.Sampler]::FormatBytes($app.TotalIn))  ↑ $([NetGadget.Sampler]::FormatBytes($app.TotalOut))"
+        $info += T 'detail.session' ([NetGadget.Sampler]::FormatBytes($app.TotalIn)) ([NetGadget.Sampler]::FormatBytes($app.TotalOut))
     }
     [void]$sp.Children.Add((New-Text ($info -join ' · ') 9.5 $brSub))
     foreach ($line in @($app.Services, $app.Path)) {
@@ -525,7 +575,7 @@ function New-DetailPanel($app, [bool]$rates) {
     $sep.Margin = '0,5,0,3'
     [void]$sp.Children.Add($sep)
 
-    if ($app.Endpoints.Count -eq 0 -and $app.Discovery.Count -eq 0) { [void]$sp.Children.Add((New-Text 'Uç nokta yok.' 10 $brDim)) }
+    if ($app.Endpoints.Count -eq 0 -and $app.Discovery.Count -eq 0) { [void]$sp.Children.Add((New-Text (T 'detail.noendpoints') 10 $brDim)) }
     foreach ($ep in $app.Endpoints) { [void]$sp.Children.Add((New-EndpointRow $ep $rates $app)) }
     if ($app.Discovery.Count -gt 0) { [void]$sp.Children.Add((New-DiscoveryBlock $app $rates)) }
 
@@ -574,10 +624,10 @@ function New-AppRow($app, [double]$maxTotal, [double]$rowWidth, [bool]$rates, [b
     $names.Margin = '0,0,6,0'
     $titleRow = New-Object Windows.Controls.DockPanel
     $pills = @()
-    if ($app.Trusted) { $pills += New-Pill 'güvenilir' $brGreenBg $brGreen }
-    elseif ($app.Level -ge 3) { $pills += New-Pill 'şüpheli' $brRedBg $brRed }
-    elseif ($app.Level -ge 2) { $pills += New-Pill 'dikkat' $brAmberBg $brAmber }
-    if ($app.IsNew) { $pills += New-Pill 'yeni' $brBlueBg $brBlue }
+    if ($app.Trusted) { $pills += New-Pill (T 'pill.trusted') $brGreenBg $brGreen }
+    elseif ($app.Level -ge 3) { $pills += New-Pill (T 'pill.suspicious') $brRedBg $brRed }
+    elseif ($app.Level -ge 2) { $pills += New-Pill (T 'pill.attention') $brAmberBg $brAmber }
+    if ($app.IsNew) { $pills += New-Pill (T 'pill.new') $brBlueBg $brBlue }
     foreach ($p in $pills) {
         [Windows.Controls.DockPanel]::SetDock($p, 'Right')
         [void]$titleRow.Children.Add($p)
@@ -589,7 +639,7 @@ function New-AppRow($app, [double]$maxTotal, [double]$rowWidth, [bool]$rates, [b
     $bits = @()
     if ($app.TcpCount -gt 0) { $bits += "TCP $($app.TcpCount)" }
     if ($app.UdpCount -gt 0) { $bits += "UDP $($app.UdpCount)" }
-    if ($app.Discovery.Count -gt 0) { $bits += "yerel ağ $($app.Discovery.Count)" }
+    if ($app.Discovery.Count -gt 0) { $bits += T 'row.local' $app.Discovery.Count }
     if ($settings.SortBy -eq 'Session' -and $rates) {
         $bits += "Σ " + [NetGadget.Sampler]::FormatBytes($app.TotalIn + $app.TotalOut)
     }
@@ -666,7 +716,8 @@ function Show-Apps {
         'Risk' { @{ Expression = 'Score'; Descending = $true }, @{ Expression = 'Total'; Descending = $true }, 'Name' }
     }
     if ($sortKeys) { $shown = @($shown | Sort-Object -Property $sortKeys) }
-    $ui.HeadApp.Text = 'UYGULAMA · ' + $SortModes[[string]$settings.SortBy].Head.ToUpper()
+    $sortHead = T "sort.$($SortModes[[string]$settings.SortBy]).head"
+    $ui.HeadApp.Text = T 'head.apps' $sortHead.ToUpper([NetGadget.Loc]::Culture)
 
     $maxTotal = 0
     foreach ($a in $shown) { if ($a.Total -gt $maxTotal) { $maxTotal = $a.Total } }
@@ -677,24 +728,23 @@ function Show-Apps {
         [void]$ui.List.Children.Add((New-AppRow $a $maxTotal $rowWidth $rates $expanded.ContainsKey($a.Key)))
     }
     if ($shown.Count -eq 0) {
-        $msg = if ($apps.Count -gt 0) { 'Şu an veri aktaran uygulama yok.' } else { 'Şu an internete bağlı uygulama yok.' }
+        $msg = if ($apps.Count -gt 0) { T 'empty.noactive' } else { T 'empty.none' }
         $empty = New-Text $msg 11.5 $brSub
         $empty.Margin = '6,6,0,6'
         [void]$ui.List.Children.Add($empty)
     }
 
-    $summary = "$($apps.Count) uygulama · TCP $($sampler.TcpCount)"
-    if ($sampler.EtwActive) { $summary += " · UDP $($sampler.UdpCount) · yerel ağ $($sampler.LocalCount)" }
-    if ($shown.Count -gt [int]$settings.MaxRows) { $summary += " · +$($shown.Count - [int]$settings.MaxRows) daha" }
+    $parts = @((T 'footer.apps' $apps.Count), (T 'footer.tcp' $sampler.TcpCount))
+    if ($sampler.EtwActive) { $parts += T 'footer.udp' $sampler.UdpCount; $parts += T 'footer.local' $sampler.LocalCount }
+    if ($shown.Count -gt [int]$settings.MaxRows) { $parts += T 'footer.more' ($shown.Count - [int]$settings.MaxRows) }
     $flagged = @($apps | Where-Object { $_.Level -ge 2 }).Count
-    if ($flagged -gt 0) { $summary += " · ⚠ $flagged dikkat gerektiren" }
-    $summary += ' · ayrıntı için uygulamaya tıklayın'
+    if ($flagged -gt 0) { $parts += T 'footer.flagged' $flagged }
+    $parts += T 'footer.hint'
+    $summary = $parts -join ' · '
     $learn = $sampler.Inspector.LearningRemaining
-    if ($learn.TotalSeconds -gt 0) {
-        $summary += "`nÖğrenme modu: normal trafiğiniz öğreniliyor, $([Math]::Ceiling($learn.TotalMinutes)) dk boyunca hiçbir şey 'yeni' sayılmaz."
-    }
-    if (-not $rates) { $summary += "`nUygulama başına trafik için yönetici izniyle başlatın." }
-    elseif (-not $sampler.EtwActive) { $summary += "`nUDP izlenemiyor ($($sampler.EtwError)); yalnızca TCP hızları." }
+    if ($learn.TotalSeconds -gt 0) { $summary += "`n" + (T 'footer.learning' ([Math]::Ceiling($learn.TotalMinutes))) }
+    if (-not $rates) { $summary += "`n" + (T 'footer.limited') }
+    elseif (-not $sampler.EtwActive) { $summary += "`n" + (T 'footer.tcponly' $sampler.EtwError) }
     $ui.Footer.Text = $summary
 }
 
@@ -708,17 +758,20 @@ function Update-View {
         $ui.TotalOut.Text = [NetGadget.Sampler]::FormatRate($sampler.TotalOut)
         Update-Graph
 
-        $rates = Test-RatesMode
-        $ui.ModeText.Text = if ($sampler.EtwActive) { 'canlı · TCP + UDP' } elseif ($rates) { 'canlı · yalnızca TCP' } else { 'sınırlı mod' }
-        $ui.ModeText.ToolTip = if ($sampler.EtwActive) { "ETW ağ olayı: $($sampler.EventCount)" } else { $null }
-        $ui.HeadIn.Visibility = if ($rates) { 'Visible' } else { 'Hidden' }
-        $ui.HeadOut.Visibility = $ui.HeadIn.Visibility
-
+        Update-ModeText
         Show-Apps
         $ui.LiveDot.Opacity = if ($ui.LiveDot.Opacity -lt 1) { 1 } else { 0.55 }
     } catch {
-        $ui.Footer.Text = 'Hata: ' + $_.Exception.Message
+        $ui.Footer.Text = T 'app.error' $_.Exception.Message
     }
+}
+
+function Update-ModeText {
+    $rates = Test-RatesMode
+    $ui.ModeText.Text = if ($sampler.EtwActive) { T 'mode.full' } elseif ($rates) { T 'mode.tcp' } else { T 'mode.limited' }
+    $ui.ModeText.ToolTip = if ($sampler.EtwActive) { T 'mode.events' $sampler.EventCount } else { $null }
+    $ui.HeadIn.Visibility = if ($rates) { 'Visible' } else { 'Hidden' }
+    $ui.HeadOut.Visibility = $ui.HeadIn.Visibility
 }
 
 # ---------- Test anlık görüntüsü ----------
@@ -770,18 +823,19 @@ $gfx.DrawLine($penOut, 21, 25, 21, 8); $gfx.DrawLine($penOut, 16, 13, 21, 8); $g
 $gfx.Dispose()
 $trayIconImage = [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
 
+# Menü metinleri Update-MenuText ile atanır; dil değişince yeniden çağrılır.
 $menu = New-Object System.Windows.Forms.ContextMenuStrip
-$miShow = New-Object System.Windows.Forms.ToolStripMenuItem('Göster / Gizle')
-$miTop = New-Object System.Windows.Forms.ToolStripMenuItem('Her zaman üstte')
+$miShow = New-Object System.Windows.Forms.ToolStripMenuItem
+$miTop = New-Object System.Windows.Forms.ToolStripMenuItem
 $miTop.CheckOnClick = $true
 $miTop.Checked = [bool]$settings.Topmost
-$miActive = New-Object System.Windows.Forms.ToolStripMenuItem('Yalnızca veri aktaranları göster')
+$miActive = New-Object System.Windows.Forms.ToolStripMenuItem
 $miActive.CheckOnClick = $true
 $miActive.Checked = [bool]$settings.ActiveOnly
 $miActive.Enabled = $isAdmin
-$miCollapse = New-Object System.Windows.Forms.ToolStripMenuItem('Tüm ayrıntıları kapat')
+$miCollapse = New-Object System.Windows.Forms.ToolStripMenuItem
 
-$miSort = New-Object System.Windows.Forms.ToolStripMenuItem('Sıralama')
+$miSort = New-Object System.Windows.Forms.ToolStripMenuItem
 function Set-SortMode([string]$mode) {
     $settings.SortBy = $mode
     foreach ($item in $miSort.DropDownItems) { $item.Checked = ([string]$item.Tag -eq $mode) }
@@ -789,31 +843,74 @@ function Set-SortMode([string]$mode) {
     Show-Apps
 }
 foreach ($mode in $SortModes.Keys) {
-    $item = New-Object System.Windows.Forms.ToolStripMenuItem($SortModes[$mode].Label)
+    $item = New-Object System.Windows.Forms.ToolStripMenuItem
     $item.Tag = $mode
     $item.Checked = ($mode -eq $settings.SortBy)
     $item.Add_Click({ param($sender, $e) Set-SortMode ([string]$sender.Tag) })
     [void]$miSort.DropDownItems.Add($item)
 }
 
-$miNames = New-Object System.Windows.Forms.ToolStripMenuItem('Ad çözümleme')
-$miReverse = New-Object System.Windows.Forms.ToolStripMenuItem('İnternet adresleri için ters DNS')
+$miNames = New-Object System.Windows.Forms.ToolStripMenuItem
+$miReverse = New-Object System.Windows.Forms.ToolStripMenuItem
 $miReverse.CheckOnClick = $true
 $miReverse.Checked = [bool]$settings.ReverseDns
-$miReverse.ToolTipText = 'Alan adı bilinmeyen IP''ler için yalnızca DNS üzerinden PTR sorgusu yapar (çok küçük DNS trafiği).'
-$miLocal = New-Object System.Windows.Forms.ToolStripMenuItem('Yerel cihaz adlarını çöz (NetBIOS/mDNS)')
+$miLocal = New-Object System.Windows.Forms.ToolStripMenuItem
 $miLocal.CheckOnClick = $true
 $miLocal.Checked = [bool]$settings.LocalNames
-$miLocal.ToolTipText = 'Yerel ağdaki cihazların adlarını gösterir; bunun için yerel ağda NetBIOS/mDNS sorgusu gönderir.'
 [void]$miNames.DropDownItems.AddRange(@($miReverse, $miLocal))
 
-$miExit = New-Object System.Windows.Forms.ToolStripMenuItem('Kapat')
-[void]$menu.Items.AddRange(@($miShow, $miTop, $miActive, $miSort, $miCollapse, $miNames,(New-Object System.Windows.Forms.ToolStripSeparator), $miExit))
+# Dil: "Otomatik" + lang klasöründeki her dil (kendi dilindeki adıyla).
+$miLang = New-Object System.Windows.Forms.ToolStripMenuItem
+function Switch-Language([string]$choice) {
+    $settings.Language = $choice
+    Save-Settings
+    Set-Language $choice
+    Update-StaticText
+    Update-MenuText
+    foreach ($a in $script:lastApps) { $sampler.Inspector.Evaluate($a) }
+    Update-ModeText
+    Show-Apps
+}
+foreach ($code in @('auto') + @($Languages.Keys)) {
+    $item = New-Object System.Windows.Forms.ToolStripMenuItem
+    $item.Tag = $code
+    $item.Add_Click({ param($sender, $e) Switch-Language ([string]$sender.Tag) })
+    [void]$miLang.DropDownItems.Add($item)
+    if ($code -eq 'auto') { [void]$miLang.DropDownItems.Add((New-Object System.Windows.Forms.ToolStripSeparator)) }
+}
+
+$miExit = New-Object System.Windows.Forms.ToolStripMenuItem
+[void]$menu.Items.AddRange(@($miShow, $miTop, $miActive, $miSort, $miCollapse, $miNames, $miLang,
+    (New-Object System.Windows.Forms.ToolStripSeparator), $miExit))
 
 $tray = New-Object System.Windows.Forms.NotifyIcon
 $tray.Icon = $trayIconImage
-$tray.Text = 'Ağ Etkinliği'
 $tray.ContextMenuStrip = $menu
+
+function Update-MenuText {
+    $miShow.Text = T 'menu.show'
+    $miTop.Text = T 'menu.topmost'
+    $miActive.Text = T 'menu.activeonly'
+    $miCollapse.Text = T 'menu.collapse'
+    $miSort.Text = T 'menu.sort'
+    foreach ($item in $miSort.DropDownItems) { $item.Text = T "sort.$($SortModes[[string]$item.Tag]).label" }
+    $miNames.Text = T 'menu.names'
+    $miReverse.Text = T 'menu.reverse'
+    $miReverse.ToolTipText = T 'menu.reverse.tip'
+    $miLocal.Text = T 'menu.local'
+    $miLocal.ToolTipText = T 'menu.local.tip'
+    $miLang.Text = T 'menu.language'
+    $current = if ($settings.Language -and $Languages.Contains([string]$settings.Language)) { [string]$settings.Language } else { 'auto' }
+    foreach ($item in $miLang.DropDownItems) {
+        if (-not ($item -is [System.Windows.Forms.ToolStripMenuItem])) { continue }
+        $code = [string]$item.Tag
+        $item.Text = if ($code -eq 'auto') { T 'menu.language.auto' } else { $Languages[$code] }
+        $item.Checked = ($code -eq $current)
+    }
+    $miExit.Text = T 'menu.exit'
+    $tray.Text = T 'app.title'
+}
+Update-MenuText
 $tray.Visible = $true
 
 function Switch-Visibility {

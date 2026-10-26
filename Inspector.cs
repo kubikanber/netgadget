@@ -212,8 +212,8 @@ namespace NetGadget
             {
                 app.SignStatus = si.Status;
                 app.Signer = si.Signer;
-                if (si.Status == "NotSigned") score += Reason(app, 2, "Dijital imzası yok");
-                else if (si.Status == "Invalid") score += Reason(app, 4, "Dijital imza geçersiz (" + si.Detail + ")");
+                if (si.Status == "NotSigned") score += Reason(app, 2, Loc.T("reason.unsigned"));
+                else if (si.Status == "Invalid") score += Reason(app, 4, Loc.T("reason.badsig", si.Detail));
             }
             if (app.Path != null)
             {
@@ -223,7 +223,7 @@ namespace NetGadget
 
             if (exe != null && Lolbins.Contains(exe))
             {
-                score += Reason(app, 2, "Sistem aracı / betik yorumlayıcısı internete bağlanıyor (" + exe + ")");
+                score += Reason(app, 2, Loc.T("reason.lolbin", exe));
                 var found = new List<string>();
                 foreach (int pid in app.Pids)
                 {
@@ -233,9 +233,9 @@ namespace NetGadget
                     foreach (string tok in CmdTokens)
                         if (cl.Contains(tok) && !found.Contains(tok.Trim())) found.Add(tok.Trim());
                 }
-                if (found.Count > 0) score += Reason(app, 3, "Şüpheli komut satırı: " + string.Join(", ", found.ToArray()));
+                if (found.Count > 0) score += Reason(app, 3, Loc.T("reason.cmdline", string.Join(", ", found.ToArray())));
                 if (pd != null && pd.ParentName != null && OfficeApps.Contains(pd.ParentName))
-                    score += Reason(app, 3, "Bir Office/PDF uygulaması tarafından başlatılmış (" + pd.ParentName + ")");
+                    score += Reason(app, 3, Loc.T("reason.office", pd.ParentName));
             }
 
             bool noDns = false;
@@ -247,29 +247,30 @@ namespace NetGadget
                 ep.DomainKey = DomainKey(ep);
                 ep.Trusted = app.StoreKey != null && trust.Contains("E|" + app.StoreKey + "|" + ep.DomainKey);
                 string odd = OddPort(ep.Port);
-                if (ep.Inbound) ep.Flags.Add(ep.Public ? "internetten gelen" : "gelen (yerel ağ)");
-                if (odd != null) ep.Flags.Add("şüpheli port: " + odd);
-                if (ep.NoDns) ep.Flags.Add("DNS kaydı yok");
+                ep.Risky = !ep.Trusted && (odd != null || ep.NoDns || (ep.Inbound && ep.Public));
+                if (ep.Inbound) ep.Flags.Add(Loc.T(ep.Public ? "flag.inbound.public" : "flag.inbound.local"));
+                if (odd != null) ep.Flags.Add(Loc.T("flag.oddport", odd));
+                if (ep.NoDns) ep.Flags.Add(Loc.T("flag.nodns"));
                 if (app.StoreKey != null && (!string.IsNullOrEmpty(ep.Host) || (now - ep.FirstSeen).TotalSeconds > 15))
                 {
                     ep.IsNew = IsNew(Remember("E|" + app.StoreKey + "|" + ep.DomainKey, now), now);
-                    if (ep.IsNew) ep.Flags.Add("yeni");
+                    if (ep.IsNew) ep.Flags.Add(Loc.T("flag.new"));
                 }
-                if (ep.Trusted) { ep.Flags.Add("güvenilir"); continue; }
+                if (ep.Trusted) { ep.Flags.Add(Loc.T("flag.trusted")); continue; }
                 if (ep.NoDns) noDns = true;
                 if (odd != null && !oddPorts.Contains(ep.Port + " " + odd)) oddPorts.Add(ep.Port + " " + odd);
                 if (ep.Inbound && ep.Public) inboundPublic++;
             }
-            if (noDns) score += Reason(app, 1, "DNS sorgusu görülmeden doğrudan IP'ye bağlandı");
-            if (oddPorts.Count > 0) score += Reason(app, 2, "Şüpheli port: " + string.Join(", ", oddPorts.ToArray()));
-            if (inboundPublic > 0) score += Reason(app, 2, "İnternetten gelen bağlantı kabul etti (" + inboundPublic + ")");
+            if (noDns) score += Reason(app, 1, Loc.T("reason.nodns"));
+            if (oddPorts.Count > 0) score += Reason(app, 2, Loc.T("reason.oddport", string.Join(", ", oddPorts.ToArray())));
+            if (inboundPublic > 0) score += Reason(app, 2, Loc.T("reason.inbound", inboundPublic));
             if (app.ListensAll && app.Path != null && app.SignStatus != null && app.SignStatus != "Valid")
-                score += Reason(app, 1, "Tüm ağ arayüzlerinde bağlantı bekliyor (imzası doğrulanmamış)");
+                score += Reason(app, 1, Loc.T("reason.listensall"));
 
             if (app.StoreKey != null)
             {
                 app.IsNew = IsNew(Remember("A|" + app.StoreKey, now), now);
-                if (app.IsNew) score += Reason(app, 1, "İlk kez internete bağlanıyor");
+                if (app.IsNew) score += Reason(app, 1, Loc.T("reason.new"));
             }
 
             if (app.Trusted)
@@ -318,14 +319,14 @@ namespace NetGadget
             string programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).ToLowerInvariant();
             string roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).ToLowerInvariant();
 
-            if (p.Contains("\\$recycle.bin\\")) return Reason(app, 4, "Geri Dönüşüm Kutusu'ndan çalışıyor");
+            if (p.Contains("\\$recycle.bin\\")) return Reason(app, 4, Loc.T("reason.recycle"));
             if (p.Contains("\\appdata\\local\\temp\\") || p.Contains("\\windows\\temp\\"))
-                return Reason(app, 3, "Geçici (Temp) klasöründen çalışıyor");
-            if (p.Contains("\\users\\public\\")) return Reason(app, 3, "Ortak kullanıcı (Public) klasöründen çalışıyor");
-            if (p.Contains("\\perflogs\\")) return Reason(app, 3, "PerfLogs klasöründen çalışıyor");
-            if (p.Contains("\\downloads\\")) return Reason(app, 2, "İndirilenler klasöründen çalışıyor");
-            if (dir == programData) return Reason(app, 2, "ProgramData kök klasöründen çalışıyor");
-            if (dir == roaming) return Reason(app, 2, "AppData\\Roaming kök klasöründen çalışıyor");
+                return Reason(app, 3, Loc.T("reason.temp"));
+            if (p.Contains("\\users\\public\\")) return Reason(app, 3, Loc.T("reason.public"));
+            if (p.Contains("\\perflogs\\")) return Reason(app, 3, Loc.T("reason.perflogs"));
+            if (p.Contains("\\downloads\\")) return Reason(app, 2, Loc.T("reason.downloads"));
+            if (dir == programData) return Reason(app, 2, Loc.T("reason.programdata"));
+            if (dir == roaming) return Reason(app, 2, Loc.T("reason.roaming"));
             return 0;
         }
 
@@ -339,13 +340,13 @@ namespace NetGadget
                 if (exe != n) continue;
                 bool ok = dir == sys || dir == win + "\\syswow64" || dir.StartsWith(win + "\\winsxs")
                     || (n == "explorer" && dir == win);
-                return ok ? 0 : Reason(app, 5, "Sistem dosyası adını taşıyor ama farklı konumda (" + dir + ")");
+                return ok ? 0 : Reason(app, 5, Loc.T("reason.masquerade", dir));
             }
             if (exe.Length < 5) return 0;
             foreach (string n in SystemNames)
             {
                 if (n.Length >= 5 && Distance(exe, n) == 1)
-                    return Reason(app, 4, "Sistem dosyasına benzeyen ad: " + exe + " ≈ " + n);
+                    return Reason(app, 4, Loc.T("reason.lookalike", exe, n));
             }
             return 0;
         }
@@ -373,10 +374,10 @@ namespace NetGadget
         {
             switch (port)
             {
-                case 4444: case 4445: case 1337: case 31337: case 12345: case 54321: return "arka kapı";
-                case 6666: case 6667: case 6668: case 6669: return "IRC";
-                case 9001: case 9030: case 9050: case 9150: return "Tor";
-                case 3333: case 5555: case 7777: case 14444: case 14433: case 45700: return "madencilik havuzu?";
+                case 4444: case 4445: case 1337: case 31337: case 12345: case 54321: return Loc.T("port.backdoor");
+                case 6666: case 6667: case 6668: case 6669: return Loc.T("port.irc");
+                case 9001: case 9030: case 9050: case 9150: return Loc.T("port.tor");
+                case 3333: case 5555: case 7777: case 14444: case 14433: case 45700: return Loc.T("port.mining");
             }
             return null;
         }

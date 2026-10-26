@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Management;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -16,6 +17,39 @@ using System.Threading;
 
 namespace NetGadget
 {
+    // Arayüz metinleri: lang/*.json dosyalarından PowerShell tarafında yüklenir.
+    // Etkin dilde olmayan anahtar yedek dilden (İngilizce), o da yoksa anahtarın kendisinden döner.
+    public static class Loc
+    {
+        static Dictionary<string, string> current = new Dictionary<string, string>();
+        static Dictionary<string, string> fallback = new Dictionary<string, string>();
+        static CultureInfo culture = CultureInfo.CurrentCulture;
+
+        public static CultureInfo Culture { get { return culture; } }
+
+        public static void Set(Dictionary<string, string> strings, Dictionary<string, string> fallbackStrings, string cultureName)
+        {
+            current = strings ?? new Dictionary<string, string>();
+            fallback = fallbackStrings ?? new Dictionary<string, string>();
+            try { culture = CultureInfo.GetCultureInfo(cultureName); }
+            catch { culture = CultureInfo.CurrentCulture; }
+        }
+
+        public static bool Has(string key)
+        {
+            return current.ContainsKey(key);
+        }
+
+        public static string T(string key, params object[] args)
+        {
+            string fmt;
+            if (!current.TryGetValue(key, out fmt) && !fallback.TryGetValue(key, out fmt)) fmt = key;
+            if (args == null || args.Length == 0) return fmt;
+            try { return string.Format(culture, fmt, args); }
+            catch (FormatException) { return fmt; }
+        }
+    }
+
     public class EndpointStat
     {
         public string Protocol;   // "TCP" / "UDP"
@@ -40,6 +74,7 @@ namespace NetGadget
         public bool NoDns;        // bu IP için DNS yanıtı görülmedi
         public bool IsNew;
         public bool Trusted;
+        public bool Risky;        // puana katkı veren bir işaret var (ve güvenilir değil)
         public string DomainKey;
         public List<string> Flags = new List<string>();
 
@@ -853,7 +888,7 @@ namespace NetGadget
                             app.Name = svc[0] + (svc.Length > 1 ? " +" + (svc.Length - 1) : "");
                             app.Services = string.Join(", ", svc);
                         }
-                        else app.Name = "Windows hizmeti (svchost)";
+                        else app.Name = Loc.T("app.svchost");
                     }
                     apps[pe.Key] = app;
                 }
@@ -1342,29 +1377,32 @@ namespace NetGadget
                 case 500: case 4500: return "IPsec";
                 case 1194: return "OpenVPN";
                 case 51820: return "WireGuard";
-                case 7680: return "Teslim İyileştirme";
+                case 7680: return Loc.T("port.deliveryopt");
             }
             if (port >= 27000 && port <= 27100) return "Steam";
             return null;
         }
 
+        // Ondalık ayırıcı seçili dile göre: "1,4 MB/s" (tr) / "1.4 MB/s" (en).
         public static string FormatRate(double bytesPerSec)
         {
-            if (bytesPerSec < 1024) return bytesPerSec.ToString("0") + " B/s";
+            var c = Loc.Culture;
+            if (bytesPerSec < 1024) return bytesPerSec.ToString("0", c) + " B/s";
             double kb = bytesPerSec / 1024;
-            if (kb < 1024) return kb.ToString(kb < 10 ? "0.0" : "0") + " KB/s";
+            if (kb < 1024) return kb.ToString(kb < 10 ? "0.0" : "0", c) + " KB/s";
             double mb = kb / 1024;
-            return mb.ToString(mb < 100 ? "0.0" : "0") + " MB/s";
+            return mb.ToString(mb < 100 ? "0.0" : "0", c) + " MB/s";
         }
 
         public static string FormatBytes(long bytes)
         {
-            if (bytes < 1024) return bytes + " B";
+            var c = Loc.Culture;
+            if (bytes < 1024) return bytes.ToString(c) + " B";
             double kb = bytes / 1024.0;
-            if (kb < 1024) return kb.ToString(kb < 10 ? "0.0" : "0") + " KB";
+            if (kb < 1024) return kb.ToString(kb < 10 ? "0.0" : "0", c) + " KB";
             double mb = kb / 1024;
-            if (mb < 1024) return mb.ToString(mb < 10 ? "0.0" : "0") + " MB";
-            return (mb / 1024).ToString("0.00") + " GB";
+            if (mb < 1024) return mb.ToString(mb < 10 ? "0.0" : "0", c) + " MB";
+            return (mb / 1024).ToString("0.00", c) + " GB";
         }
     }
 }
